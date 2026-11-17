@@ -14,11 +14,11 @@ class ItemNameFilterParserTest {
 
     @Test
     void removesNameArgumentAndKeepsTheRest() {
-        ItemNameFilterParser.ParseResult result = ItemNameFilterParser.parse(new String[] { "lookup", "u:LilPuppyyy", "n:Gravedigger", "t:30d" });
+        ItemNameFilterParser.ParseResult result = ItemNameFilterParser.parse(new String[] { "lookup", "u:Notch", "n:Gravedigger", "t:30d" });
 
         assertTrue(result.isSpecified());
         assertEquals(List.of("Gravedigger"), result.getFilters());
-        assertArrayEquals(new String[] { "lookup", "u:LilPuppyyy", "t:30d" }, result.getArguments());
+        assertArrayEquals(new String[] { "lookup", "u:Notch", "t:30d" }, result.getArguments());
     }
 
     @Test
