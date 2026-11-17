@@ -57,6 +57,7 @@ Perform a lookup. Nearly all of the parameters are optional.
 | [`i:<include>`](#iinclude) | Include specific blocks/entities in the lookup. |
 | [`e:<exclude>`](#eexclude) | Exclude blocks/entities from the lookup. |
 | [`f:<filter>`](#ffilter) | Include or exclude chat, command, or sign text by prefix. |
+| [`n:<name>`](#nname) | Include or exclude items by their custom name. |
 | [`#<hashtag>`](#hashtag) | Add a hashtag to perform additional actions. |
 
 #### Pagination
@@ -267,6 +268,18 @@ ___
 * Example: `a:sign f:Diamond Shop,-Diamond Shop Closed` *(filter prefixes on the recorded sign face)*
 
 > Separate filters with commas. Included prefixes are alternatives; any matching excluded prefix removes the result. Exclusions can be used on their own. Each prefix requires at least three characters, excluding the leading `-` marker. Spaces are allowed, and `*`, `%`, `_`, and `~` are matched literally.
+
+---
+
+### `n:<name>`
+
+*Filter items by their name when using `a:container`, `a:item`, `a:inventory`, or no action.*
+
+* Example: `a:container n:Gravedigger` *(container transactions of items named "Gravedigger")*
+* Example: `u:Notch a:inventory n:digger` *(names containing "digger")*
+* Example: `a:item n:digger,-Fork` *(include "digger" and exclude names containing "Fork")*
+
+> Matches the item's custom name and its item name, anywhere in the name, ignoring case and colours. Separate filters with commas; any matching excluded text removes the result. Each filter requires at least three characters. Names are read from each row's stored item data after the query, so a lookup stops after `item-name-filter-scan-limit` rows (default 200,000); narrow it with `u:`, `i:`, or `t:` to search further back. Not available for rollbacks, restores, purges, or `#summary`.
 
 ---
 

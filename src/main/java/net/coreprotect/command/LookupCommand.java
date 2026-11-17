@@ -21,6 +21,7 @@ import net.coreprotect.command.lookup.ChestTransactionLookupThread;
 import net.coreprotect.command.lookup.EntityInteractionLookupThread;
 import net.coreprotect.command.lookup.StandardLookupThread;
 import net.coreprotect.command.parser.ActionParser;
+import net.coreprotect.command.parser.ItemNameFilterParser;
 import net.coreprotect.command.parser.MessageFilterParser;
 import net.coreprotect.command.parser.RollbackStateParser;
 import net.coreprotect.config.Config;
@@ -40,6 +41,9 @@ import net.coreprotect.utility.ErrorReporter;
 public class LookupCommand {
     public static void runCommand(CommandSender player, Command command, boolean permission, String[] args) {
         int resultc = args.length;
+        ItemNameFilterParser.ParseResult nameFilterResult = ItemNameFilterParser.parse(args);
+        args = nameFilterResult.getArguments();
+        List<String> argNameFilters = nameFilterResult.getFilters();
         MessageFilterParser.ParseResult messageFilterResult = CommandParser.parseMessageFilters(args);
         args = messageFilterResult.getArguments();
         List<String> argFilters = messageFilterResult.getFilters();
@@ -169,6 +173,17 @@ public class LookupCommand {
             boolean signLookup = !argAction.isEmpty() && argAction.stream().allMatch(action -> action == LookupActions.SIGN);
             if (!messageLookup && !signLookup) {
                 Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INCOMPATIBLE_ACTION, "f:<filter>"));
+                return;
+            }
+        }
+        if (nameFilterResult.isSpecified()) {
+            if (nameFilterResult.hasInvalidLength()) {
+                Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.NAME_FILTER_TOO_SHORT, Integer.toString(ItemNameFilterParser.MINIMUM_FILTER_CODE_POINTS)));
+                return;
+            }
+            boolean itemLookup = argAction.stream().allMatch(action -> action == LookupActions.CONTAINER || action == LookupActions.ITEM);
+            if (!itemLookup || summary) {
+                Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INCOMPATIBLE_ACTION, "n:<name>"));
                 return;
             }
         }
@@ -437,6 +452,7 @@ public class LookupCommand {
                     argAction = ConfigHandler.lookupAlist.get(player.getName());
                     argEntityActionFilter = ConfigHandler.lookupEntityActionFilter.getOrDefault(player.getName(), EntityActionFilter.DEFAULT);
                     argFilters = ConfigHandler.lookupFlist.getOrDefault(player.getName(), Collections.emptyList());
+                    argNameFilters = ConfigHandler.lookupNlist.getOrDefault(player.getName(), Collections.emptyList());
                     argRadius = ConfigHandler.lookupRadius.get(player.getName());
                     ts = ConfigHandler.lookupTime.get(player.getName());
                     outputMode = ConfigHandler.lookupOutputMode.getOrDefault(player.getName(), LookupOutputMode.DETAIL);
@@ -518,7 +534,7 @@ public class LookupCommand {
 
                     Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.ITALIC + Phrase.build(Phrase.LOOKUP_SEARCHING));
 
-                    Runnable runnable = new StandardLookupThread(player, command, rollbackusers, argBlocks, argExclude, argExcludeUsers, argAction, argEntityActionFilter, argFilters, argRadius, lo, x, y, z, wid, argWid, timeStart, timeEnd, argNoisy, argExcluded, argRestricted, pa, re, type, ts, outputMode, rollbackState);
+                    Runnable runnable = new StandardLookupThread(player, command, rollbackusers, argBlocks, argExclude, argExcludeUsers, argAction, argEntityActionFilter, argFilters, argNameFilters, argRadius, lo, x, y, z, wid, argWid, timeStart, timeEnd, argNoisy, argExcluded, argRestricted, pa, re, type, ts, outputMode, rollbackState);
                     Thread thread = new Thread(runnable);
                     thread.start();
                 }

@@ -86,6 +86,8 @@ public class Language {
         phrases.put(Phrase.HELP_EXCLUDE_2, "Examples: [e:stone], [e:Notch], [e:stone,Notch]");
         phrases.put(Phrase.HELP_FILTER_1, "Filter chat, command, or sign text.");
         phrases.put(Phrase.HELP_FILTER_2, "Examples: [a:command f:/co], [a:sign f:-Shop]");
+        phrases.put(Phrase.HELP_NAME_1, "Filter items by their custom name.");
+        phrases.put(Phrase.HELP_NAME_2, "Examples: [a:container n:Gravedigger], [a:item n:digger,-Fork]");
         phrases.put(Phrase.HELP_HEADER, "{0} Help");
         phrases.put(Phrase.HELP_INCLUDE_1, "Include specific blocks/entities.");
         phrases.put(Phrase.HELP_INCLUDE_2, "Examples: [i:stone], [i:zombie], [i:stone,wood,bedrock]");
@@ -179,6 +181,8 @@ public class Language {
         phrases.put(Phrase.MAXIMUM_PURGE_RADIUS, "The maximum purge radius is {0}.");
         phrases.put(Phrase.MAXIMUM_RADIUS, "The maximum {lookup|rollback|restore} radius is {0}.");
         phrases.put(Phrase.MESSAGE_FILTER_TOO_SHORT, "Minimum message filter length is {0} characters.");
+        phrases.put(Phrase.NAME_FILTER_SCAN_LIMIT, "Item name filter stopped after {0} rows. Narrow the lookup with u:, i: or t:.");
+        phrases.put(Phrase.NAME_FILTER_TOO_SHORT, "Minimum item name filter length is {0} characters.");
         phrases.put(Phrase.MISSING_ACTION_USER, "To use that action, please specify a user.");
         phrases.put(Phrase.MISSING_LOOKUP_TIME, "Please specify the amount of time to {lookup|rollback|restore}.");
         phrases.put(Phrase.MISSING_LOOKUP_USER, "Please specify a user or {block|radius} to lookup.");

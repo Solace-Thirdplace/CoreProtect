@@ -35,6 +35,8 @@ public final class MessageFilterParser {
             "item:",
             "items:",
             "location:",
+            "n:",
+            "name:",
             "p:",
             "page:",
             "position:",

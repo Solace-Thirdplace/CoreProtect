@@ -26,8 +26,8 @@ import net.coreprotect.config.ConfigHandler;
 public class TabHandler implements TabCompleter {
 
     // private static String[] COMMANDS = new String[] { "help", "inspect", "rollback", "restore", "lookup", "purge", "reload", "status", "near", "undo" }; // max 10!
-    private static final String[] HELP = new String[] { "inspect", "rollback", "restore", "lookup", "purge", "teleport", "status", "params", "users", "time", "radius", "action", "include", "exclude", "filter" };
-    private static final String[] PARAMS = new String[] { "user:", "time:", "radius:", "action:", "include:", "exclude:", "filter:", "#container" };
+    private static final String[] HELP = new String[] { "inspect", "rollback", "restore", "lookup", "purge", "teleport", "status", "params", "users", "time", "radius", "action", "include", "exclude", "filter", "name" };
+    private static final String[] PARAMS = new String[] { "user:", "time:", "radius:", "action:", "include:", "exclude:", "filter:", "name:", "#container" };
     private static final String[] ACTIONS = new String[] { "block", "+block", "-block", "click", "kill", "spawn", "+container", "-container", "container", "chat", "command", "+inventory", "-inventory", "inventory", "item", "+item", "-item", "sign", "session", "+session", "-session", "username" };
     private static final String[] NUMBERS = new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
     private static final String[] TIMES = new String[] { "w", "d", "h", "m", "s" };
@@ -155,6 +155,7 @@ public class TabHandler implements TabCompleter {
         boolean hasInclude;
         boolean hasExclude;
         boolean hasFilter;
+        boolean hasName;
         boolean hasRadius;
         boolean hasTime;
         boolean hasContainer;
@@ -194,6 +195,9 @@ public class TabHandler implements TabCompleter {
             }
             else if (arg.startsWith("f:") || arg.startsWith("filter:")) {
                 state.hasFilter = true;
+            }
+            else if (arg.startsWith("n:") || arg.startsWith("name:")) {
+                state.hasName = true;
             }
             else if ((!arg.contains(":") && !args[i - 1].contains(":") && args.length > (i + 1) && !ActionParser.isModifier(arg)) || arg.startsWith("u:") || arg.startsWith("user:") || arg.startsWith("users:") || arg.startsWith("p:")) {
                 state.hasUser = true;
@@ -487,6 +491,9 @@ public class TabHandler implements TabCompleter {
                 params.add(param);
             }
             else if (param.equals("filter:") && !state.hasFilter && (lastArgument.equals("l") || lastArgument.equals("lookup"))) {
+                params.add(param);
+            }
+            else if (param.equals("name:") && !state.hasName && (lastArgument.equals("l") || lastArgument.equals("lookup"))) {
                 params.add(param);
             }
             else if (param.equals("radius:") && !state.hasRadius) {

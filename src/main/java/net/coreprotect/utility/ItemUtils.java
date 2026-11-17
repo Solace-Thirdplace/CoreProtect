@@ -714,6 +714,38 @@ public class ItemUtils {
         return message.toString();
     }
 
+    /**
+     * Every name a logged item carries: its custom name and its item_name component.
+     * Empty when there is no metadata or the item has neither.
+     */
+    public static List<String> getItemNames(byte[] metadata, int type, int amount) {
+        List<String> names = new ArrayList<>(2);
+        if (metadata == null) {
+            return names;
+        }
+
+        try {
+            ItemStack item = getItemStack(metadata, type, amount);
+            if (item == null || !item.hasItemMeta()) {
+                return names;
+            }
+
+            ItemMeta itemMeta = item.getItemMeta();
+            if (itemMeta.hasDisplayName()) {
+                names.add(itemMeta.getDisplayName());
+            }
+            String itemName = BukkitAdapter.ADAPTER.getItemName(itemMeta);
+            if (itemName != null && !itemName.isEmpty()) {
+                names.add(itemName);
+            }
+        }
+        catch (Exception e) {
+            // Unreadable metadata has no name to match.
+        }
+
+        return names;
+    }
+
     private static String getItemDisplayName(ItemMeta itemMeta) {
         if (itemMeta.hasDisplayName()) {
             return itemMeta.getDisplayName();

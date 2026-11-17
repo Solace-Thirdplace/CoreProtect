@@ -20,6 +20,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import net.coreprotect.command.parser.ActionParser;
+import net.coreprotect.command.parser.ItemNameFilterParser;
 import net.coreprotect.command.parser.ParserUtils;
 import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
@@ -498,6 +499,7 @@ public class RollbackRestoreCommand {
                 return raw.trim();
             }
         }
-        return null;
+        // n: is applied after the query, so a rollback would ignore it and act on every item.
+        return ItemNameFilterParser.findNameParameter(args, 1);
     }
 }

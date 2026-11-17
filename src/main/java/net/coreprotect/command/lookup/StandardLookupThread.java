@@ -23,6 +23,7 @@ import org.bukkit.command.CommandSender;
 
 import com.google.common.base.Strings;
 
+import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.database.Database;
 import net.coreprotect.database.Lookup;
@@ -50,6 +51,7 @@ import net.coreprotect.model.lookup.LookupSummaryRow;
 import net.coreprotect.utility.Chat;
 import net.coreprotect.utility.ChatUtils;
 import net.coreprotect.utility.Color;
+import net.coreprotect.utility.ItemNameMatcher;
 import net.coreprotect.utility.EntityUtils;
 import net.coreprotect.utility.EntitySpawnTracking;
 import net.coreprotect.utility.ItemUtils;
@@ -72,6 +74,7 @@ public class StandardLookupThread implements Runnable {
     private final List<Integer> actions;
     private final EntityActionFilter entityActionFilter;
     private final List<String> messageFilters;
+    private final List<String> itemNameFilters;
     private final Integer[] radius;
     private final Location location;
     private final int x;
@@ -91,7 +94,7 @@ public class StandardLookupThread implements Runnable {
     private final LookupOutputMode outputMode;
     private final LookupRollbackState rollbackState;
 
-    public StandardLookupThread(CommandSender player, Command command, List<String> rollbackUsers, List<Object> blockList, Map<Object, Boolean> excludedBlocks, List<String> excludedUsers, List<Integer> actions, EntityActionFilter entityActionFilter, List<String> messageFilters, Integer[] radius, Location location, int x, int y, int z, int worldId, int argWorldId, long timeStart, long timeEnd, int noisy, int excluded, int restricted, int page, int displayResults, int typeLookup, String rtime, LookupOutputMode outputMode, LookupRollbackState rollbackState) {
+    public StandardLookupThread(CommandSender player, Command command, List<String> rollbackUsers, List<Object> blockList, Map<Object, Boolean> excludedBlocks, List<String> excludedUsers, List<Integer> actions, EntityActionFilter entityActionFilter, List<String> messageFilters, List<String> itemNameFilters, Integer[] radius, Location location, int x, int y, int z, int worldId, int argWorldId, long timeStart, long timeEnd, int noisy, int excluded, int restricted, int page, int displayResults, int typeLookup, String rtime, LookupOutputMode outputMode, LookupRollbackState rollbackState) {
         this.player = player;
         this.command = command;
         this.rollbackUsers = rollbackUsers;
@@ -101,6 +104,7 @@ public class StandardLookupThread implements Runnable {
         this.actions = actions;
         this.entityActionFilter = entityActionFilter;
         this.messageFilters = messageFilters;
+        this.itemNameFilters = itemNameFilters == null ? Collections.emptyList() : itemNameFilters;
         this.radius = radius;
         this.location = location;
         this.x = x;
@@ -158,6 +162,7 @@ public class StandardLookupThread implements Runnable {
             ConfigHandler.lookupAlist.put(player.getName(), actions);
             ConfigHandler.lookupEntityActionFilter.put(player.getName(), entityActionFilter);
             ConfigHandler.lookupFlist.put(player.getName(), messageFilters);
+            ConfigHandler.lookupNlist.put(player.getName(), this.itemNameFilters);
             ConfigHandler.lookupRadius.put(player.getName(), radius);
             ConfigHandler.lookupOutputMode.put(player.getName(), outputMode == LookupOutputMode.COUNT ? LookupOutputMode.DETAIL : outputMode);
             ConfigHandler.lookupRollbackState.put(player.getName(), rollbackState);
@@ -261,6 +266,25 @@ public class StandardLookupThread implements Runnable {
                         }
                     }
 
+                    List<String[]> nameFilteredRows = null;
+                    boolean nameScanStopped = false;
+                    if (!itemNameFilters.isEmpty()) {
+                        int scanLimit = Math.max(1, Config.getGlobal().ITEM_NAME_FILTER_SCAN_LIMIT);
+                        ItemNameLookup.Result nameScan = ItemNameLookup.scan(statement, player, uuidList, userList, blockList, excludedBlocks, excludedUsers, actions, entityActionFilter, messageFilters, entityContext, finalLocation, radius, timeStart, timeEnd, restrict_world, entityContainerId, rollbackState, ItemNameMatcher.of(itemNameFilters), scanLimit);
+                        if (nameScan.isLimitReached()) {
+                            nameScanStopped = true;
+                            nameFilteredRows = Collections.emptyList();
+                            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.NAME_FILTER_SCAN_LIMIT, NumberFormat.getInstance().format(nameScan.getScanned())));
+                        }
+                        else {
+                            nameFilteredRows = nameScan.getRows();
+                        }
+                        rows = nameFilteredRows.size();
+                        rowData[4] = rows;
+                        ConfigHandler.lookupRows.put(player.getName(), rowData);
+                        checkRows = false;
+                    }
+
                     if (checkRows) {
                         if (outputMode == LookupOutputMode.SUMMARY) {
                             rows = 0L;
@@ -290,7 +314,7 @@ public class StandardLookupThread implements Runnable {
                         rowData[4] = rows;
                         ConfigHandler.lookupRows.put(player.getName(), rowData);
                     }
-                    if (lookupPage == null && outputMode == LookupOutputMode.DETAIL && ConfigHandler.databaseType.isColumnar() && pageStart < rows) {
+                    if (nameFilteredRows == null && lookupPage == null && outputMode == LookupOutputMode.DETAIL && ConfigHandler.databaseType.isColumnar() && pageStart < rows) {
                         LookupCursor cursor = ConfigHandler.lookupCursor.get(player.getName());
                         lookupPage = Lookup.performLookupPage(statement, player, uuidList, userList, blockList, excludedBlocks, excludedUsers, actions, entityActionFilter, messageFilters, entityContext, finalLocation, radius, rowData, timeStart, timeEnd, (int) pageStart, displayResults, rows, cursor, restrict_world, true, entityContainerId, rollbackState);
                     }
@@ -303,7 +327,10 @@ public class StandardLookupThread implements Runnable {
                             ConfigHandler.lookupCursor.put(player.getName(), nextCursor);
                         }
                     }
-                    if (outputMode == LookupOutputMode.COUNT) {
+                    if (nameScanStopped) {
+                        // The scan limit message has already been sent.
+                    }
+                    else if (outputMode == LookupOutputMode.COUNT) {
                         outputRowCount(rows);
                     }
                     else if (outputMode == LookupOutputMode.SUMMARY && (pageStart < rows || (pageStart == 0 && recordRows > 0))) {
@@ -315,7 +342,9 @@ public class StandardLookupThread implements Runnable {
                         outputSummary(connection, summaryRows, rows, recordRows);
                     }
                     else if (pageStart < rows) {
-                        List<String[]> lookupList = lookupPage == null
+                        List<String[]> lookupList = nameFilteredRows != null
+                                ? new ArrayList<>(nameFilteredRows.subList((int) pageStart, (int) Math.min(nameFilteredRows.size(), pageStart + displayResults)))
+                                : lookupPage == null
                                 ? Lookup.performPartialLookup(statement, player, uuidList, userList, blockList, excludedBlocks, excludedUsers, actions, entityActionFilter, messageFilters, entityContext, finalLocation, radius, rowData, timeStart, timeEnd, (int) pageStart, displayResults, restrict_world, true, entityContainerId, rollbackState)
                                 : lookupPage.getRows();
                         if (lookupList == null) {

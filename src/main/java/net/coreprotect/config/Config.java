@@ -115,6 +115,7 @@ public class Config extends Language {
     public int DEFAULT_RADIUS;
     public int DUCKDB_THREADS;
     public int MAX_RADIUS;
+    public int ITEM_NAME_FILTER_SCAN_LIMIT;
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -142,6 +143,7 @@ public class Config extends Language {
         DEFAULT_VALUES.put("verbose", "true");
         DEFAULT_VALUES.put("default-radius", "10");
         DEFAULT_VALUES.put("max-radius", "100");
+        DEFAULT_VALUES.put("item-name-filter-scan-limit", "200000");
         DEFAULT_VALUES.put("rollback-items", "true");
         DEFAULT_VALUES.put("rollback-entities", "true");
         DEFAULT_VALUES.put("skip-generic-data", "true");
@@ -193,6 +195,7 @@ public class Config extends Language {
         HEADERS.put("verbose", new String[] { "# If enabled, extra data is displayed during rollbacks and restores.", "# Can be manually triggered by adding \"#verbose\" to your rollback command." });
         HEADERS.put("default-radius", new String[] { "# If no radius is specified in a rollback or restore, this value will be", "# used as the radius. Set to \"0\" to disable automatically adding a radius." });
         HEADERS.put("max-radius", new String[] { "# The maximum radius that can be used in a command. Set to \"0\" to disable.", "# To run a rollback or restore without a radius, you can use \"r:#global\"." });
+        HEADERS.put("item-name-filter-scan-limit", new String[] { "# The most rows a lookup with an item name filter (n:) reads before it stops.", "# Narrow the lookup with u:, i: or t: to search further back." });
         HEADERS.put("rollback-items", new String[] { "# If enabled, items taken from containers (etc) will be included in rollbacks." });
         HEADERS.put("rollback-entities", new String[] { "# If enabled, entity kills and player-attributed entity spawns will be included in rollbacks." });
         HEADERS.put("skip-generic-data", new String[] { "# If enabled, generic data, like zombies burning in daylight, won't be logged." });
@@ -278,6 +281,7 @@ public class Config extends Language {
         this.VERBOSE = this.getBoolean("verbose");
         this.DEFAULT_RADIUS = this.getInt("default-radius");
         this.MAX_RADIUS = this.getInt("max-radius");
+        this.ITEM_NAME_FILTER_SCAN_LIMIT = this.getInt("item-name-filter-scan-limit");
         this.ROLLBACK_ITEMS = this.getBoolean("rollback-items");
         this.ROLLBACK_ENTITIES = this.getBoolean("rollback-entities");
         this.SKIP_GENERIC_DATA = this.getBoolean("skip-generic-data");

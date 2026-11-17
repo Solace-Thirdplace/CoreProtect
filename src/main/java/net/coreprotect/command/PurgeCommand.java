@@ -26,6 +26,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import net.coreprotect.bukkit.BukkitAdapter;
+import net.coreprotect.command.parser.ItemNameFilterParser;
 import net.coreprotect.command.parser.MaterialParser;
 import net.coreprotect.command.parser.ParserUtils;
 import net.coreprotect.config.Config;
@@ -213,6 +214,11 @@ public class PurgeCommand extends Consumer {
 
     protected static void runCommand(final CommandSender player, boolean permission, String[] args) {
         int resultc = args.length;
+        String nameParameter = ItemNameFilterParser.findNameParameter(args, 1);
+        if (nameParameter != null) {
+            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INVALID_PARAMETER, nameParameter));
+            return;
+        }
         Location location = CommandParser.parseLocation(player, args);
         final Integer[] argRadius = CommandParser.parseRadius(args, player, location);
         final List<Integer> argAction = CommandParser.parseAction(args);
