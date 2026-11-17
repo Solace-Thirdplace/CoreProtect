@@ -1026,6 +1026,7 @@ public class Database extends Queue {
                 createSQLiteIndexes(tablePrefix, statement, indexData, attachDatabase, purge, createChatMessagePrefixIndex, createCommandMessagePrefixIndex, createSignMessagePrefixIndexes);
 
                 if (!purge && forceConnection == null) {
+                    ensureSQLiteSignRollbackColumn(statement, tablePrefix);
                     initializeTables(prefix, statement, DatabaseType.SQLITE);
                 }
             }
@@ -1033,6 +1034,30 @@ public class Database extends Queue {
         catch (Exception e) {
             throw new IllegalStateException("Failed to initialize the SQLite schema", e);
         }
+    }
+
+    /**
+     * Sign rollbacks read co_sign.rolled_back. New databases get it from CREATE TABLE, but an
+     * upgraded one only gets it from patch 2.25.1, which doesn't run until the plugin reaches
+     * 25.1. Until then a sign rollback on an upgraded database fails with "no such column".
+     * Adding the column is a metadata-only change in SQLite, and the 2.25.1 patch skips it when
+     * it already exists.
+     */
+    private static void ensureSQLiteSignRollbackColumn(Statement statement, String prefix) throws SQLException {
+        String table = prefix + "sign";
+        try (ResultSet columns = statement.executeQuery("PRAGMA table_info('" + table + "')")) {
+            boolean tableExists = false;
+            while (columns.next()) {
+                tableExists = true;
+                if ("rolled_back".equalsIgnoreCase(columns.getString("name"))) {
+                    return;
+                }
+            }
+            if (!tableExists) {
+                return;
+            }
+        }
+        statement.executeUpdate("ALTER TABLE " + table + " ADD COLUMN rolled_back INTEGER DEFAULT 0");
     }
 
     private static void identifyExistingTablesAndIndexes(Statement statement, String attachDatabase, List<String> tableData, List<String> indexData) throws SQLException {
